@@ -9,6 +9,8 @@
 #include "position_control_utils.h"
 #include <franka/gripper.h>
 
+#define NONE -10000
+
 
 std::string removeWhitespace(const std::string& cell){
     std::cout << cell << std::endl;
@@ -40,14 +42,17 @@ std::vector<std::array<double, 7>> parseConfsFile(std::string filepath){
             }
             std::stringstream lineStream(line);
             int i = 0;
-            std::array<double, 7> q = {{0, 0, 0, 0, 0, 0, 0}};
+            std::array<double, 7> q = {{NONE, NONE, NONE, NONE, NONE, NONE, NONE}};
             while (std::getline(lineStream, cell, ',')){
                 double num = std::stod(cell) ;
                 //std::cout << num << " ";
                 q[i] = num;
                 i+=1;
             }
-            assert(isConfValid(q));
+            // it could also be an x,y value used for calibration
+            if (i == 7) {
+                assert(isConfValid(q));
+            }
             out.push_back(q);
             //std::cout << std::endl;
         }

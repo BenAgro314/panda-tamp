@@ -23,6 +23,12 @@ $(ODIR)/%.o: %.cpp $(DEPS)
 panda_test: $(OBJ)
 	$(CC) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
+_OBJ = calibration.o
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+
+calibration: $(OBJ)
+	$(CC) -o $@ $^ $(CXXFLAGS) $(LIBS)
+
 .PHONY: clean
 
 clean:
