@@ -8,8 +8,13 @@
 #include "parse_confs.h"
 
 int main(int argc, char** argv){
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <robot-hostname> <homing> <object-width>" << std::endl;
+    if (argc != 5) {
+        std::cerr << "Usage: " << argv[0] << " <robot-hostname> <homing> <object-width> <percent-max-speed>" << std::endl;
+        return -1;
+    }
+    double percent_max_speed = std::stod(argv[4]);
+    if ((percent_max_speed > 1) || (percent_max_speed <= 0)){
+        std::cout << "Percent of max speed must be in (0, 1], you supplied the value "<< percent_max_speed << std::endl;
         return -1;
     }
     auto confs_list = parseConfsFile("./confs.txt");
@@ -28,6 +33,10 @@ int main(int argc, char** argv){
             std::cerr << "<homing> can be 0 or 1." << std::endl;
             return -1;
         }
+        if (homing){
+            std::cout << "Starting homing to estimate finger width" << std::endl;
+            gripper.homing();
+        }
         franka::GripperState gripper_state = gripper.readOnce();
         if (gripper_state.max_width < grasping_width) {
             std::cout << "Object is too large for the current fingers on the gripper." << std::endl;
@@ -37,7 +46,7 @@ int main(int argc, char** argv){
         setDefaultBehavior(robot);
 
         std::array<double, 7> q_goal = {{0.0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
-        MotionGenerator motion_generator(0.5, q_goal);
+        MotionGenerator motion_generator(percent_max_speed, q_goal);
 
         std::cout << "WARNING: This example will move the robot! "
                 << "Please make sure to have the user stop button at hand!" << std::endl
@@ -47,10 +56,6 @@ int main(int argc, char** argv){
         robot.control(motion_generator);
         std::cout << "Finished moving to initial joint configuration." << std::endl;
 
-        if (homing){
-            std::cout << "Starting homing to estimate finger width" << std::endl;
-            gripper.homing();
-        }
 
         if (gripper_state.max_width < grasping_width) {
             std::cout << "Object is too large for the current fingers on the gripper." << std::endl;
@@ -73,7 +78,7 @@ int main(int argc, char** argv){
                     return -1;
                 }
             } else {
-                MotionGenerator motion_generator(0.5, conf);
+                MotionGenerator motion_generator(percent_max_speed, conf);
                 robot.control(motion_generator);
             }
             std::cout << "Ending motion #" << j << std::endl;
